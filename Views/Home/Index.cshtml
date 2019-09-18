@@ -1,0 +1,134 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<style>
+    img {
+        width: 100PX;
+        height: 100px;
+    }
+
+    img, h2, input {
+        display: inline-block;
+    }
+
+    #container div {
+        margin-top: 20px;
+    }
+
+    #search {
+        display: block;
+        margin-top: 40px;
+    }
+
+    input[type=button] {
+        margin-top: 10px;
+    }
+
+    a, img {
+        margin-left: 20px;
+    }
+    #bookMarkList {
+        display:none;
+    }
+</style>
+
+<div>
+    <input type="text" id="search" />
+    <input type="button" value="search" onclick="getJSON();" /><br />
+    <a href="~/MyRepositories.aspx" id="bookMarkList">See my bookMarks</a>
+    <div id="container"></div>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+<script>
+
+    var getJSON = function () {
+        var url = "https://api.github.com/search/repositories?q=" + document.getElementById("search").value;
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'json';
+        xhr.onload = function () {
+            var container = document.getElementById("container");
+            var link = document.getElementById("bookMarkList");
+            var status = xhr.status;
+            if (status === 200) {
+                container.innerText = "";
+                link.style.display = "none";
+
+                for (var i = 0; i < xhr.response.items.length; i++)
+                {
+                    var item = xhr.response.items[i];
+                    var d = document.createElement('div');
+                    var a = document.createElement('a');
+                    a.href = item.html_url;
+                    a.text = item.name;
+                    var img = document.createElement('img');
+                    img.src = item.owner.avatar_url;
+                    var cb = document.createElement('input');
+                    cb.type = "checkbox";
+                    cb.id = "cb" + item.id;
+                    cb.setAttribute('onclick', "check(" +"'"+ item.name+"'" + "," +"'"+ item.html_url+"'" + ");");
+                    var lbl = document.createElement("lable");
+                    lbl.innerText = "Add to my bookMark";
+                    d.appendChild(cb);
+                    d.appendChild(lbl);
+                    d.appendChild(a);
+                    d.appendChild(img);
+                    container.appendChild(d);
+                }
+
+                if (xhr.response.items.length == 0)
+                {
+                    var lbl = document.createElement("lable");
+                    lbl.innerText = "No result Check spelling...";
+                    lbl.style.color = "red";
+                    lbl.id = "errorSearch";
+                    container.appendChild(lbl);
+                }
+
+                else
+                {
+                    if (document.getElementById("errorSearch") != null)
+                    {
+                        document.getElementById("errorSearch").innerText = "";
+                    }
+                }
+            }
+            else
+            {
+                alert(xhr.response);
+            }
+        };
+        xhr.send();
+    };
+
+
+    function check(name,htmlUrl)
+    {
+        var container = document.getElementById("container");
+        if (container != null) {
+            container.setAttribute('disabled', 'true');
+        }
+        $.ajax({
+            url: '/SessionStorage.aspx/StoreToSession',
+
+            data:
+                {
+                    name: name,
+                    htmlUrl: htmlUrl,
+                },
+
+            success: function (data)
+            {
+                container.setAttribute('disabled', 'false');
+                var link = document.getElementById("bookMarkList");
+                link.style.display = "block";
+                link.style.color = "red";
+
+            }
+        });
+    }
+
+</script>
